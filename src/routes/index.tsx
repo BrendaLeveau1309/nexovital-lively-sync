@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { Bell, ChevronRight, Clock3, HeartPulse, History, Home, LocateFixed, LogOut, Menu, Navigation, UserRound, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Activity, Bell, CalendarDays, ChevronRight, Clock3, Droplets, HeartPulse, History, Home, LocateFixed, LogOut, Mail, Menu, Moon, Navigation, Phone, ShieldCheck, Sun, UserRound, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FullScreenMap } from "@/components/nexovital/full-screen-map";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,6 +48,29 @@ function NexoVitalApp() {
   const [searching, setSearching] = useState(false);
   const [searchDone, setSearchDone] = useState(false);
   const [searchCode, setSearchCode] = useState("");
+  const [darkMode, setDarkMode] = useState(false);
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    setDarkMode(window.localStorage.getItem("nexovital-theme") === "dark");
+    return () => { if (searchTimer.current) clearTimeout(searchTimer.current); };
+  }, []);
+  const toggleTheme = () => setDarkMode(current => {
+    window.localStorage.setItem("nexovital-theme", current ? "light" : "dark");
+    return !current;
+  });
+  const changeRole = (next: Role) => {
+    setRole(next);
+    setView("home");
+    setSearchDone(false);
+    setSearching(false);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+  };
+  const cancelSearch = () => {
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = null;
+    setSearching(false);
+  };
 
   useEffect(() => {
     if (!authenticated || !showMatch || role !== "donor") return;
@@ -65,23 +88,23 @@ function NexoVitalApp() {
   const startSearch = () => {
     if (!searchCode.trim()) return;
     setSearching(true);
-    window.setTimeout(() => { setSearching(false); setSearchDone(true); }, 1500);
+    searchTimer.current = window.setTimeout(() => { setSearching(false); setSearchDone(true); searchTimer.current = null; }, 2200);
   };
 
   return (
-    <main className="relative mx-auto h-[100svh] w-full max-w-[480px] overflow-hidden bg-background shadow-panel">
+    <main className={`${darkMode ? "dark" : ""} relative mx-auto h-[100svh] w-full max-w-[480px] overflow-hidden bg-background text-foreground shadow-panel`}>
       {view === "home" && (
         <>
           <FullScreenMap />
           <header className="absolute inset-x-0 top-0 z-20 px-4 pt-4">
-            <div className="glass-panel flex items-center justify-between rounded-2xl border border-border/60 p-3">
-              <Button size="icon" variant="ghost" aria-label="Abrir menú" onClick={() => setMenuOpen(true)}><Menu /></Button>
+            <div className="flex items-center justify-between rounded-lg bg-primary p-3 text-primary-foreground shadow-brand">
+              <Button size="icon" variant="ghost" className="text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground" aria-label="Abrir menú" onClick={() => setMenuOpen(true)}><Menu /></Button>
               <div className="min-w-0 flex-1 px-2">
-                 <h1 className="truncate text-base font-black text-primary">NexoVital</h1>
-                 <p className="truncate text-xs font-bold text-muted-foreground">{role === "donor" ? "Donante" : "Solicitante"} · Hola, Valeria</p>
+                <h1 className="truncate text-base font-black text-primary-foreground">NexoVital</h1>
+                <p className="truncate text-xs font-bold text-primary-foreground/85">{role === "donor" ? "Donante" : "Solicitante"} · Hola, Valeria</p>
               </div>
-              {role === "donor" && <span className="rounded-xl bg-destructive px-3 py-2 text-sm font-black text-destructive-foreground">O+</span>}
-              <Button size="icon" variant="ghost" aria-label="Notificaciones"><Bell /></Button>
+              {role === "donor" && <span className="rounded-md bg-primary-foreground/15 px-3 py-2 text-sm font-black text-primary-foreground">O+</span>}
+              <Button size="icon" variant="ghost" className="text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground" aria-label="Notificaciones" onClick={() => setMenuPanel("notifications")}><Bell /></Button>
             </div>
           </header>
 
@@ -116,16 +139,15 @@ function NexoVitalApp() {
                 <input value={searchCode} onChange={e => setSearchCode(e.target.value)} className="min-w-0 flex-1 rounded-xl border bg-surface px-4 py-3 font-bold uppercase" placeholder="Ej. NV-28491" maxLength={12} />
                 <Button variant="vivid" size="lg" disabled={searching} onClick={startSearch}><Navigation />{searching ? "Buscando…" : "Buscar"}</Button>
               </div>
-              {searching && <p role="status" className="mt-3 text-sm font-semibold text-primary">Buscando donantes compatibles…</p>}
             </section>
           )}
         </>
       )}
       {view === "tracking" && <Tracking role={role} />}
       {view === "history" && <HistoryView role={role} />}
-      {view === "account" && <Account role={role} onRoleChange={setRole} />}
+      {view === "account" && <Account role={role} darkMode={darkMode} onToggleTheme={toggleTheme} />}
 
-      <nav className="safe-bottom glass-panel absolute inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t px-2 pt-2">
+      <nav className="safe-bottom absolute inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-primary-foreground/20 bg-primary px-2 pt-2 text-primary-foreground shadow-panel">
         <NavItem active={view === "home"} icon={Home} label="Inicio" onClick={() => setView("home")} />
         <NavItem active={view === "tracking"} icon={Navigation} label="Tracking" onClick={() => setView("tracking")} />
         <NavItem active={view === "history"} icon={History} label="Historial" onClick={() => setView("history")} />
@@ -133,8 +155,16 @@ function NexoVitalApp() {
       </nav>
 
       {showAvailability && <Modal title="¿Cuándo podrías donar?" onClose={() => setShowAvailability(false)}><p className="mb-4 text-sm text-muted-foreground">Indica una fecha estimada para que el hospital prepare tu llegada.</p><input type="datetime-local" className="w-full rounded-xl border bg-surface px-4 py-3" /><Button className="mt-4 w-full" variant="vivid" size="lg" onClick={() => { setShowAvailability(false); setShowMatch(false); setView("tracking"); }}>Confirmar disponibilidad</Button></Modal>}
+      {searching && <Modal title="Buscando coincidencias" onClose={cancelSearch}>
+        <div role="status" aria-live="polite" className="flex flex-col items-center py-8 text-center">
+          <div className="grid size-20 place-items-center rounded-full border-4 border-primary/15 border-t-primary motion-safe:animate-spin"><HeartPulse className="size-8 text-primary" /></div>
+          <p className="mt-6 text-base font-extrabold">Buscando donantes compatibles</p>
+          <p className="mt-2 text-sm text-muted-foreground">Solicitud {searchCode.trim().toUpperCase()}</p>
+        </div>
+        <Button className="w-full" variant="outline" onClick={cancelSearch}>Cancelar búsqueda</Button>
+      </Modal>}
       {searchDone && <Modal title="Búsqueda finalizada" onClose={() => setSearchDone(false)}><p className="mb-4 text-sm text-muted-foreground">Encontramos donantes compatibles para la solicitud {searchCode.toUpperCase()}. Puedes seguir el avance de cada donación.</p><Button className="w-full" variant="vivid" size="lg" onClick={() => { setSearchDone(false); setView("tracking"); }}>Ver seguimiento</Button></Modal>}
-      {menuOpen && <SideMenu role={role} setRole={setRole} onClose={() => { setMenuOpen(false); setMenuPanel(null); }} onLogout={() => setAuthenticated(false)} onOpen={setMenuPanel} />}
+      {menuOpen && <SideMenu role={role} onRoleChange={changeRole} darkMode={darkMode} onToggleTheme={toggleTheme} onClose={() => { setMenuOpen(false); setMenuPanel(null); }} onLogout={() => setAuthenticated(false)} onOpen={setMenuPanel} />}
       {menuPanel === "notifications" && <Modal title="Gestionar notificaciones" onClose={() => setMenuPanel(null)}><NotificationToggles /></Modal>}
       {menuPanel === "info" && <Modal title="Información para donar" onClose={() => setMenuPanel(null)}><p className="text-sm text-muted-foreground">Puedes donar si tienes entre 18 y 65 años, pesas más de 50 kg y han pasado al menos 3 meses desde tu última donación. Lleva tu documento de identidad y llega hidratado.</p></Modal>}
       {menuPanel === "terms" && <Modal title="Términos y condiciones" onClose={() => setMenuPanel(null)}><p className="text-sm text-muted-foreground">NexoVital conecta donantes voluntarios con solicitudes de sangre verificadas por establecimientos de salud registrados. El uso de la plataforma es gratuito y voluntario.</p></Modal>}
