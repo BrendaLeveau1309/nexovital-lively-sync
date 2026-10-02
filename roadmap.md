@@ -1,12 +1,11 @@
-# NexoVital roadmap
+# Roadmap
 
-- [ ] Aplicar identidad roja y encabezado NexoVital
-- [ ] Activar controles del backoffice en el prototipo
-- [ ] Mostrar detalles al tocar marcadores y cuenta regresiva de 60 segundos
-- [ ] Define shared visual system and navigation structure
-- [ ] Build interactive mobile donor/requester prototype
-- [ ] Build administrator and hospital backoffice prototype
-- [ ] Connect authentication and complete user profiles
-- [ ] Model establishments, requests, donations, tracking, and notifications
-- [ ] Connect Google Maps and render full-screen interactive maps
-- [ ] Validate key flows, roles, and responsive layouts
+- [x] Limpiar migraciones Drizzle copiadas (set vacío)
+- [x] Conectar Google Maps Platform gestionado
+- [ ] Login móvil: fondo rojo, quitar registro con Google
+- [ ] Recuperar contraseña: flujo con código (teléfono/correo enmascarados, reenviar, nueva contraseña, volver al login)
+- [ ] Historial donante: pestañas Historial/Estadísticas con gráficas (presión, hemoglobina, pulso)
+- [ ] Solicitante: búsqueda por código con modal de confirmación, tracking con card resumen + donantes desplegables, historial de solicitudes, cancelar búsqueda
+- [ ] Sidebar: gestionar notificaciones (3 interruptores)
+- [ ] Backoffice admin: activar/desactivar cuentas y establecimientos, búsqueda por establecimiento
+- [ ] Backoffice hospital: crear solicitud con código generado, historial con filtros (código, fecha, estado), proceso activo por etapas con validación final
