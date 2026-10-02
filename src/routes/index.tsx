@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Bell, ChevronRight, Clock3, HeartPulse, History, Home, LocateFixed, LogOut, MapPin, Menu, Navigation, Search, UserRound, X } from "lucide-react";
+import { Bell, ChevronRight, Clock3, HeartPulse, History, Home, LocateFixed, LogOut, Menu, Navigation, UserRound, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FullScreenMap } from "@/components/nexovital/full-screen-map";
 import { supabase } from "@/integrations/supabase/client";
