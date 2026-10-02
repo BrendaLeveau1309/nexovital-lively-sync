@@ -1,12 +1,20 @@
-# NexoVital roadmap
+# Roadmap — NexoVital
 
-- [ ] Aplicar identidad roja y encabezado NexoVital
-- [ ] Activar controles del backoffice en el prototipo
-- [ ] Mostrar detalles al tocar marcadores y cuenta regresiva de 60 segundos
-- [ ] Define shared visual system and navigation structure
-- [ ] Build interactive mobile donor/requester prototype
-- [ ] Build administrator and hospital backoffice prototype
-- [ ] Connect authentication and complete user profiles
-- [ ] Model establishments, requests, donations, tracking, and notifications
-- [ ] Connect Google Maps and render full-screen interactive maps
-- [ ] Validate key flows, roles, and responsive layouts
+## App móvil (src/routes/index.tsx)
+- [x] Login fondo rojo, selector DNI/CE/Pasaporte, sin registro con Google
+- [x] Registro: documento, nombres, correo, teléfono, grupo sanguíneo/Rh, contraseña, términos
+- [x] Recuperar contraseña: teléfono/correo enmascarado → código 6 dígitos → reenviar → nueva contraseña
+- [x] Donante: inicio con mapa y tarjeta de matching 1 min, seguimiento con línea de tiempo, cancelar proceso
+- [x] Historial con pestañas Historial/Estadísticas (gráficos Hb, presión, pulso)
+- [x] Solicitante: búsqueda por código con modal de confirmación, seguimiento por donante, historial
+- [x] Menú lateral: notificaciones (3 interruptores), info, términos, privacidad, cancelar búsqueda
+
+## Backoffice (src/routes/backoffice.tsx)
+- [x] Login institucional con fondo rojo y recuperación de acceso
+- [x] Admin: buscar establecimiento, activar/desactivar cuentas de personal y centros, registrar personal, CRUD de establecimientos
+- [x] Hospital: tarjetas de panel, crear solicitud con código generado (modal), historial con filtros (código, estado, fecha) y detalle con donaciones
+- [x] Proceso activo por etapas: identificación (código + DNI), tamizaje (Hb/presión/pulso), donación, validación final (resultado, aptitud, motivo, fechas) + historial del donante
+
+## Pendiente
+- [ ] Verificar el mapa de Google en la URL de vista previa (falla en localhost por restricción de dominio de la clave)
+- [ ] Conectar los flujos demo a la base de datos real (perfiles, solicitudes, donaciones)
