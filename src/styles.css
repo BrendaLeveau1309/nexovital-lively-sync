@@ -1,0 +1,44 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: "Nunito Sans", ui-sans-serif, system-ui, sans-serif;
+  --radius-sm: calc(var(--radius) - 4px); --radius-md: calc(var(--radius) - 2px); --radius-lg: var(--radius); --radius-xl: calc(var(--radius) + 6px);
+  --color-background: var(--background); --color-foreground: var(--foreground); --color-card: var(--card); --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover); --color-popover-foreground: var(--popover-foreground); --color-primary: var(--primary); --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary); --color-secondary-foreground: var(--secondary-foreground); --color-muted: var(--muted); --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent); --color-accent-foreground: var(--accent-foreground); --color-destructive: var(--destructive); --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border); --color-input: var(--input); --color-ring: var(--ring); --color-surface: var(--surface); --color-map-fallback: var(--map-fallback);
+  --color-success: var(--success); --color-warning: var(--warning); --color-urgent: var(--urgent);
+  --shadow-panel: var(--shadow-panel); --shadow-brand: var(--shadow-brand);
+}
+
+:root {
+  --radius: 0.85rem;
+  --background: oklch(0.985 0.005 20); --foreground: oklch(0.22 0.025 20);
+  --card: oklch(1 0 0); --card-foreground: var(--foreground); --popover: oklch(1 0 0); --popover-foreground: var(--foreground);
+  --primary: oklch(0.52 0.21 24); --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.88 0.12 86); --secondary-foreground: oklch(0.24 0.04 80);
+  --muted: oklch(0.955 0.01 20); --muted-foreground: oklch(0.48 0.025 20);
+  --accent: oklch(0.93 0.045 22); --accent-foreground: oklch(0.37 0.15 24);
+  --destructive: oklch(0.61 0.22 25); --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.89 0.015 20); --input: oklch(0.89 0.015 20); --ring: var(--primary);
+  --surface: oklch(1 0 0); --map-fallback: oklch(0.91 0.025 20); --success: oklch(0.64 0.14 152); --warning: oklch(0.78 0.15 79); --urgent: oklch(0.62 0.23 27);
+  --shadow-panel: 0 12px 35px color-mix(in oklab, var(--foreground) 16%, transparent); --shadow-brand: 0 10px 24px color-mix(in oklab, var(--primary) 34%, transparent);
+}
+
+@layer base {
+  * { border-color: var(--color-border); }
+  html, body { min-height: 100%; }
+  body { margin: 0; background: var(--color-background); color: var(--color-foreground); font-family: var(--font-sans); letter-spacing: 0; }
+  button, input, select { font: inherit; }
+  input, select { outline: none; }
+  input:focus, select:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 18%, transparent); }
+}
+
+@utility glass-panel { background: color-mix(in oklab, var(--surface) 92%, transparent); box-shadow: var(--shadow-panel); backdrop-filter: blur(16px); }
+@utility safe-bottom { padding-bottom: calc(0.75rem + env(safe-area-inset-bottom)); }
+@utility subtle-grid { background-image: linear-gradient(to right, color-mix(in oklab, var(--border) 35%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in oklab, var(--border) 35%, transparent) 1px, transparent 1px); background-size: 24px 24px; }
