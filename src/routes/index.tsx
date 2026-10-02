@@ -265,15 +265,21 @@ function Tracking({ role }: { role: Role }) {
     return <div className="h-full overflow-y-auto px-5 pb-28 pt-8">
       <p className="text-xs font-extrabold uppercase text-primary">Seguimiento activo</p>
       <h1 className="mt-1 text-3xl font-black">Solicitud NV-28491</h1>
-      <div className="mt-5 rounded-2xl bg-primary p-5 text-primary-foreground shadow-brand">
-        <p className="text-sm opacity-80">Paciente: J. Quispe · DNI 45678912</p>
-        <div className="mt-3 flex items-end justify-between"><span className="text-4xl font-black">O+</span><span className="rounded-full bg-secondary px-3 py-1 text-xs font-black text-secondary-foreground">Urgencia alta</span></div>
-        <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
-          <div className="rounded-xl bg-primary-foreground/10 p-2"><p className="opacity-70">Unidades</p><p className="font-black">2 / 3</p></div>
-          <div className="rounded-xl bg-primary-foreground/10 p-2"><p className="opacity-70">Estado</p><p className="font-black">En proceso</p></div>
-          <div className="rounded-xl bg-primary-foreground/10 p-2"><p className="opacity-70">Creada</p><p className="font-black">28 sep</p></div>
+      <section className="mt-5 overflow-hidden rounded-lg border bg-card shadow-sm" aria-label="Resumen de solicitud">
+        <div className="flex flex-wrap items-start justify-between gap-3 bg-primary px-5 py-4 text-primary-foreground">
+          <div><p className="text-xs font-bold text-primary-foreground/80">GRUPO SOLICITADO</p><p className="mt-1 flex items-center gap-2 text-3xl font-black"><Droplets className="size-6" /> O+</p></div>
+          <span className="rounded-md bg-secondary px-3 py-1.5 text-xs font-black text-secondary-foreground">Urgencia alta</span>
         </div>
-      </div>
+        <div className="px-5 py-4">
+          <p className="text-xs font-bold uppercase text-muted-foreground">Paciente</p>
+          <p className="mt-1 font-extrabold">J. Quispe <span className="font-medium text-muted-foreground">· DNI 45678912</span></p>
+          <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-4 border-t pt-4 text-sm">
+            <div><p className="text-xs text-muted-foreground">Unidades cubiertas</p><p className="mt-1 font-black">2 de 3</p></div>
+            <div><p className="text-xs text-muted-foreground">Estado</p><p className="mt-1 font-black text-primary">En proceso</p></div>
+            <div className="col-span-2 flex items-center gap-2 border-t pt-3 text-muted-foreground"><CalendarDays className="size-4" /> Creada el 28 sep 2026</div>
+          </div>
+        </div>
+      </section>
       <h2 className="mt-6 text-sm font-extrabold uppercase text-muted-foreground">Donantes conectados</h2>
       {donors.map((d, i) => <article key={d.alias} className="mt-3 rounded-2xl border bg-card">
         <button className="flex w-full items-center justify-between p-4 text-left" onClick={() => setOpenDonor(openDonor === i ? null : i)}>
@@ -291,9 +297,23 @@ function Tracking({ role }: { role: Role }) {
 }
 
 function MiniChart({ label, values, unit }: { label: string; values: number[]; unit: string }) {
-  const max = Math.max(...values); const min = Math.min(...values);
-  const points = values.map((v, i) => `${(i / (values.length - 1)) * 100},${30 - ((v - min) / (max - min || 1)) * 26}`).join(" ");
-  return <div className="rounded-2xl border bg-card p-4"><p className="text-sm font-bold">{label}</p><svg viewBox="0 0 100 34" className="mt-2 w-full" aria-hidden="true"><polyline points={points} fill="none" stroke="currentColor" strokeWidth="2" className="text-primary" strokeLinecap="round" strokeLinejoin="round" /></svg><p className="mt-1 text-xs text-muted-foreground">Último registro: <b className="text-foreground">{values[values.length - 1]} {unit}</b></p></div>;
+  const low = Math.min(...values);
+  const high = Math.max(...values);
+  const spread = Math.max(high - low, 1);
+  const coords = values.map((value, index) => ({ x: 18 + index * (264 / Math.max(1, values.length - 1)), y: 108 - (value - (low - spread * 0.35)) / (high - low + spread * 0.7) * 82 }));
+  const points = coords.map(({ x, y }) => `${x},${y}`).join(" ");
+  const dates = ["Oct 25", "Ene 26", "Jun 26"];
+  const colorClass = label === "Hemoglobina" ? "text-primary" : label === "Pulso" ? "text-chart-gold" : "text-chart-teal";
+  const difference = values[values.length - 1] - values[0];
+  return <article className="rounded-lg border bg-card p-4" aria-label={`${label}: ${values.map((v, i) => `${dates[i]} ${v} ${unit}`).join(", ")}`}>
+    <div className="flex items-start justify-between gap-3"><div><h2 className="text-sm font-extrabold">{label}</h2><p className="mt-0.5 text-xs text-muted-foreground">Últimos {values.length} registros</p></div><div className="text-right"><p className={`text-xl font-black ${colorClass}`}>{values[values.length - 1]} <span className="text-xs font-semibold">{unit}</span></p><p className="text-xs text-muted-foreground">{difference === 0 ? "Sin variación" : `${difference > 0 ? "+" : ""}${Number(difference.toFixed(1))} desde ${dates[0]}`}</p></div></div>
+    <div className={`mt-4 ${colorClass}`}><svg viewBox="0 0 300 126" className="h-32 w-full overflow-visible" role="img" aria-label={`Evolución de ${label.toLowerCase()}`} preserveAspectRatio="none">
+      {[26, 67, 108].map(y => <line key={y} x1="18" x2="282" y1={y} y2={y} stroke="var(--border)" strokeWidth="1" strokeDasharray="3 4" />)}
+      <polyline points={points} fill="none" stroke="currentColor" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" />
+      {coords.map(({x,y}, i) => <g key={i}><circle cx={x} cy={y} r="6" fill="var(--card)" stroke="currentColor" strokeWidth="3" /><text x={x} y={Math.max(14, y - 13)} textAnchor="middle" fill="currentColor" fontSize="11" fontWeight="700">{values[i]}</text></g>)}
+    </svg></div>
+    <div className="flex justify-between px-1 text-xs font-semibold text-muted-foreground">{dates.map(date => <span key={date}>{date}</span>)}</div>
+  </article>;
 }
 
 function HistoryView({ role }: { role: Role }) {
@@ -319,27 +339,34 @@ function HistoryView({ role }: { role: Role }) {
       <div className="mt-5 grid grid-cols-3 gap-2"><Info label="Última" value="12 jun"/><Info label="Próxima" value="12 dic"/><Info label="Exitosas" value="4"/></div>
       <div className="mt-6 space-y-3">{donorHistory.map(r => <article key={r.date} className="rounded-2xl border bg-card p-4"><div className="flex justify-between"><div><p className="font-black">{r.place}</p><p className="text-sm text-muted-foreground">{r.date} · O+</p></div><span className="text-xs font-black text-primary">{r.result}</span></div><div className="mt-3 flex gap-4 text-xs text-muted-foreground"><span>Hb {r.hb}</span><span>{r.bp}</span><span>{r.pulse} ppm</span></div></article>)}</div>
     </> : <div className="mt-5 space-y-3">
-      <MiniChart label="Hemoglobina" values={donorHistory.map(r => r.hb).reverse()} unit="g/dL" />
-      <MiniChart label="Presión sistólica" values={donorHistory.map(r => Number(r.bp.split("/")[0])).reverse()} unit="mmHg" />
-      <MiniChart label="Pulso" values={donorHistory.map(r => r.pulse).reverse()} unit="ppm" />
+      <MiniChart label="Hemoglobina" values={[...donorHistory].reverse().map(r => r.hb)} unit="g/dL" />
+      <MiniChart label="Presión sistólica" values={[...donorHistory].reverse().map(r => Number(r.bp.split("/")[0]))} unit="mmHg" />
+      <MiniChart label="Pulso" values={[...donorHistory].reverse().map(r => r.pulse)} unit="ppm" />
     </div>}
   </div>;
 }
 
-function Account({role,onRoleChange}:{role:Role;onRoleChange:(r:Role)=>void}){return <div className="h-full overflow-y-auto px-5 pb-28 pt-8"><p className="text-xs font-extrabold uppercase text-primary">Mi cuenta</p><h1 className="mt-1 text-3xl font-black">Valeria Mendoza</h1><div className="mt-5 rounded-2xl border bg-card p-4"><p className="text-sm font-bold">Usar NexoVital como</p><div className="mt-3 grid grid-cols-2 gap-2"><Button variant={role==="donor"?"vivid":"outline"} onClick={()=>onRoleChange("donor")}>Donante</Button><Button variant={role==="requester"?"vivid":"outline"} onClick={()=>onRoleChange("requester")}>Solicitante</Button></div></div>{["DNI 72918421","O positivo","valeria@email.com","+51 987 654 321","Donante disponible","Estado: APTO"].map(x=><div key={x} className="flex items-center justify-between border-b py-4 font-semibold"><span>{x}</span><ChevronRight className="size-4 text-muted-foreground"/></div>)}</div>}
+function Account({role,darkMode,onToggleTheme}:{role:Role;darkMode:boolean;onToggleTheme:()=>void}){return <div className="h-full overflow-y-auto px-5 pb-28 pt-8">
+  <p className="text-xs font-extrabold uppercase text-primary">Mi cuenta</p><h1 className="mt-1 text-3xl font-black">Cuenta</h1>
+  <div className="mt-6 flex items-center gap-4 border-b pb-6"><div className="grid size-16 shrink-0 place-items-center rounded-full bg-accent text-accent-foreground"><UserRound className="size-8"/></div><div className="min-w-0"><h2 className="text-xl font-black">Valeria Mendoza</h2><p className="mt-1 text-sm text-muted-foreground">{role === "donor" ? "Perfil de donante" : "Perfil de solicitante"}</p></div></div>
+  <section className="mt-6"><h2 className="text-xs font-extrabold uppercase text-muted-foreground">Datos personales</h2><div className="mt-2 divide-y border-y"><AccountRow icon={ShieldCheck} label="Documento" value="DNI 72918421"/><AccountRow icon={Mail} label="Correo electrónico" value="valeria@email.com"/><AccountRow icon={Phone} label="Teléfono" value="+51 987 654 321"/></div></section>
+  {role === "donor" && <section className="mt-7"><h2 className="text-xs font-extrabold uppercase text-muted-foreground">Información de donación</h2><div className="mt-2 divide-y border-y"><AccountRow icon={Droplets} label="Grupo sanguíneo" value="O positivo"/><AccountRow icon={HeartPulse} label="Disponibilidad" value="Disponible"/><AccountRow icon={Activity} label="Aptitud" value="APTO"/></div></section>}
+  <section className="mt-7"><h2 className="text-xs font-extrabold uppercase text-muted-foreground">Apariencia</h2><Button variant="ghost" className="mt-2 flex h-auto w-full justify-start gap-3 border-y py-4 text-left" onClick={onToggleTheme} aria-label={darkMode ? "Activar modo claro" : "Activar modo oscuro"}>{darkMode ? <Sun className="size-5 text-primary"/> : <Moon className="size-5 text-primary"/>}<span className="flex-1 font-bold">{darkMode ? "Modo claro" : "Modo oscuro"}</span></Button></section>
+</div>}
+function AccountRow({icon:Icon,label,value}:{icon:typeof Home;label:string;value:string}){return <div className="flex min-h-16 items-center gap-3 py-3"><Icon className="size-5 shrink-0 text-primary"/><div className="min-w-0"><p className="text-xs text-muted-foreground">{label}</p><p className="break-words text-sm font-bold">{value}</p></div></div>}
 
-function SideMenu({role,setRole,onClose,onLogout,onOpen}:{role:Role;setRole:(r:Role)=>void;onClose:()=>void;onLogout:()=>void;onOpen:(panel:string)=>void}){
+function SideMenu({role,onRoleChange,darkMode,onToggleTheme,onClose,onLogout,onOpen}:{role:Role;onRoleChange:(r:Role)=>void;darkMode:boolean;onToggleTheme:()=>void;onClose:()=>void;onLogout:()=>void;onOpen:(panel:string)=>void}){
   const items: { label: string; panel: string }[] = [
     { label: "Gestionar notificaciones", panel: "notifications" },
     { label: "Información para donar", panel: "info" },
     { label: "Términos y condiciones", panel: "terms" },
     { label: "Política de privacidad", panel: "privacy" },
   ];
-  return <div className="absolute inset-0 z-50 bg-foreground/20" onClick={onClose}><aside className="h-full w-[84%] bg-surface p-5 shadow-panel" onClick={e=>e.stopPropagation()}><div className="flex items-center justify-between"><b className="text-xl">NexoVital</b><Button size="icon" variant="ghost" onClick={onClose}><X/></Button></div><div className="mt-8 rounded-2xl bg-accent p-4"><p className="text-xs font-bold text-primary">MODO ACTUAL</p><p className="text-xl font-black">{role==="donor"?"Donante":"Solicitante"}</p><Button className="mt-3 w-full" variant="outline" onClick={()=>{setRole(role==="donor"?"requester":"donor");onClose();}}>Cambiar de modo</Button></div>{items.map(x=><button key={x.panel} onClick={()=>onOpen(x.panel)} className="flex w-full items-center justify-between border-b py-4 text-left font-bold">{x.label}<ChevronRight className="size-4"/></button>)}<Button className="mt-8 w-full" variant="ghost" onClick={onLogout}><LogOut/>Cerrar sesión</Button></aside></div>;
+  return <div className="absolute inset-0 z-50 bg-foreground/20" onClick={onClose}><aside className="h-full w-[84%] bg-surface p-5 shadow-panel" onClick={e=>e.stopPropagation()}><div className="flex items-center justify-between"><b className="text-xl">NexoVital</b><Button size="icon" variant="ghost" onClick={onClose}><X/></Button></div><div className="mt-8 rounded-lg bg-accent p-4"><p className="text-xs font-bold text-primary">MODO ACTUAL</p><p className="text-xl font-black">{role==="donor"?"Donante":"Solicitante"}</p><Button className="mt-3 w-full" variant="outline" onClick={()=>{onRoleChange(role==="donor"?"requester":"donor");onClose();}}>Cambiar de modo</Button></div><Button variant="ghost" className="mt-4 w-full justify-start" onClick={onToggleTheme}>{darkMode ? <Sun/> : <Moon/>}{darkMode ? "Modo claro" : "Modo oscuro"}</Button>{items.map(x=><button key={x.panel} onClick={()=>onOpen(x.panel)} className="flex w-full items-center justify-between border-b py-4 text-left font-bold">{x.label}<ChevronRight className="size-4"/></button>)}<Button className="mt-8 w-full" variant="ghost" onClick={onLogout}><LogOut/>Cerrar sesión</Button></aside></div>;
 }
 
 function Modal({title,onClose,children}:{title:string;onClose:()=>void;children:React.ReactNode}){return <div className="absolute inset-0 z-50 grid place-items-end bg-foreground/30 p-4"><div className="w-full rounded-3xl bg-surface p-5 shadow-panel"><div className="flex justify-between"><h2 className="text-xl font-black">{title}</h2><Button size="icon" variant="ghost" onClick={onClose}><X/></Button></div>{children}</div></div>}
 function Info({label,value,urgent=false}:{label:string;value:string;urgent?:boolean}){return <div className="rounded-xl bg-muted p-3"><p className="text-muted-foreground">{label}</p><p className={`mt-1 font-black ${urgent?"text-destructive":"text-foreground"}`}>{value}</p></div>}
-function NavItem({active,icon:Icon,label,onClick}:{active:boolean;icon:typeof Home;label:string;onClick:()=>void}){return <button onClick={onClick} className={`flex min-h-14 flex-col items-center justify-center gap-1 text-[11px] font-bold ${active?"text-primary":"text-muted-foreground"}`}><Icon className="size-5"/>{label}</button>}
+function NavItem({active,icon:Icon,label,onClick}:{active:boolean;icon:typeof Home;label:string;onClick:()=>void}){return <Button variant="ghost" onClick={onClick} className={`flex h-14 flex-col items-center justify-center gap-1 rounded-md text-[11px] font-bold ${active?"bg-primary-foreground/15 text-primary-foreground":"text-primary-foreground/75 hover:bg-primary-foreground/10 hover:text-primary-foreground"}`}><Icon className="size-5"/>{label}</Button>}
 function Field({label,name,type="text",placeholder}:{label:string;name:string;type?:string;placeholder:string}){return <label className="block text-sm font-bold">{label}<input name={name} type={type} required maxLength={255} placeholder={placeholder} className="mt-1.5 w-full rounded-xl border bg-surface px-4 py-3 font-normal"/></label>}
 function FieldSelect({label,name,options}:{label:string;name:string;options:string[]}){return <label className="block text-sm font-bold">{label}<select name={name} className="mt-1.5 w-full rounded-xl border bg-surface px-3 py-3 font-normal">{options.map(x=><option key={x}>{x}</option>)}</select></label>}
