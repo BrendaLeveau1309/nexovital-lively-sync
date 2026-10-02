@@ -1,11 +1,20 @@
-# Roadmap
+# Roadmap — NexoVital
 
-- [x] Limpiar migraciones Drizzle copiadas (set vacío)
-- [x] Conectar Google Maps Platform gestionado
-- [ ] Login móvil: fondo rojo, quitar registro con Google
-- [ ] Recuperar contraseña: flujo con código (teléfono/correo enmascarados, reenviar, nueva contraseña, volver al login)
-- [ ] Historial donante: pestañas Historial/Estadísticas con gráficas (presión, hemoglobina, pulso)
-- [ ] Solicitante: búsqueda por código con modal de confirmación, tracking con card resumen + donantes desplegables, historial de solicitudes, cancelar búsqueda
-- [ ] Sidebar: gestionar notificaciones (3 interruptores)
-- [ ] Backoffice admin: activar/desactivar cuentas y establecimientos, búsqueda por establecimiento
-- [ ] Backoffice hospital: crear solicitud con código generado, historial con filtros (código, fecha, estado), proceso activo por etapas con validación final
+## App móvil (src/routes/index.tsx)
+- [x] Login fondo rojo, selector DNI/CE/Pasaporte, sin registro con Google
+- [x] Registro: documento, nombres, correo, teléfono, grupo sanguíneo/Rh, contraseña, términos
+- [x] Recuperar contraseña: teléfono/correo enmascarado → código 6 dígitos → reenviar → nueva contraseña
+- [x] Donante: inicio con mapa y tarjeta de matching 1 min, seguimiento con línea de tiempo, cancelar proceso
+- [x] Historial con pestañas Historial/Estadísticas (gráficos Hb, presión, pulso)
+- [x] Solicitante: búsqueda por código con modal de confirmación, seguimiento por donante, historial
+- [x] Menú lateral: notificaciones (3 interruptores), info, términos, privacidad, cancelar búsqueda
+
+## Backoffice (src/routes/backoffice.tsx)
+- [x] Login institucional con fondo rojo y recuperación de acceso
+- [x] Admin: buscar establecimiento, activar/desactivar cuentas de personal y centros, registrar personal, CRUD de establecimientos
+- [x] Hospital: tarjetas de panel, crear solicitud con código generado (modal), historial con filtros (código, estado, fecha) y detalle con donaciones
+- [x] Proceso activo por etapas: identificación (código + DNI), tamizaje (Hb/presión/pulso), donación, validación final (resultado, aptitud, motivo, fechas) + historial del donante
+
+## Pendiente
+- [ ] Verificar el mapa de Google en la URL de vista previa (falla en localhost por restricción de dominio de la clave)
+- [ ] Conectar los flujos demo a la base de datos real (perfiles, solicitudes, donaciones)
