@@ -5,6 +5,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { routeTree } from "@/routeTree.gen";
 
+// Head resources cannot load in jsdom; keep these mount checks focused on routes.
+vi.mock("@tanstack/react-router", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@tanstack/react-router")>();
+  return { ...actual, HeadContent: () => null, Scripts: () => null };
+});
+
 function renderAt(path: string) {
   const queryClient = new QueryClient();
   const router = createRouter({

@@ -16,5 +16,6 @@
 - [x] Proceso activo por etapas: identificación (código + DNI), tamizaje (Hb/presión/pulso), donación, validación final (resultado, aptitud, motivo, fechas) + historial del donante
 
 ## Pendiente
+- [x] Profesionalizar la presentación del acceso, app móvil y backoffice sin alterar los flujos
 - [ ] Verificar el mapa de Google en la URL de vista previa (falla en localhost por restricción de dominio de la clave)
 - [ ] Conectar los flujos demo a la base de datos real (perfiles, solicitudes, donaciones)

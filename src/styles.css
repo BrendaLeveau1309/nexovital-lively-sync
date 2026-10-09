@@ -5,7 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: "Nunito Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
   --radius-sm: calc(var(--radius) - 4px); --radius-md: calc(var(--radius) - 2px); --radius-lg: var(--radius); --radius-xl: calc(var(--radius) + 6px);
   --color-background: var(--background); --color-foreground: var(--foreground); --color-card: var(--card); --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover); --color-popover-foreground: var(--popover-foreground); --color-primary: var(--primary); --color-primary-foreground: var(--primary-foreground);
@@ -17,18 +17,18 @@
 }
 
 :root {
-  --radius: 0.85rem;
-  --background: oklch(0.985 0.005 20); --foreground: oklch(0.22 0.025 20);
+  --radius: 0.5rem;
+  --background: oklch(1 0 0); --foreground: oklch(0.25 0.015 260);
   --card: oklch(1 0 0); --card-foreground: var(--foreground); --popover: oklch(1 0 0); --popover-foreground: var(--foreground);
-  --primary: oklch(0.52 0.21 24); --primary-foreground: oklch(0.99 0 0);
+  --primary: oklch(0.52 0.20 24); --primary-foreground: oklch(0.99 0 0);
   --secondary: oklch(0.88 0.12 86); --secondary-foreground: oklch(0.24 0.04 80);
-  --muted: oklch(0.955 0.01 20); --muted-foreground: oklch(0.48 0.025 20);
+  --muted: oklch(0.965 0.004 260); --muted-foreground: oklch(0.48 0.014 260);
   --accent: oklch(0.93 0.045 22); --accent-foreground: oklch(0.37 0.15 24);
   --destructive: oklch(0.61 0.22 25); --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(0.89 0.015 20); --input: oklch(0.89 0.015 20); --ring: var(--primary);
+  --border: oklch(0.91 0.006 260); --input: oklch(0.87 0.008 260); --ring: var(--primary);
   --surface: oklch(1 0 0); --map-fallback: oklch(0.91 0.025 20); --success: oklch(0.64 0.14 152); --warning: oklch(0.78 0.15 79); --urgent: oklch(0.62 0.23 27);
   --chart-teal: oklch(0.53 0.12 178); --chart-gold: oklch(0.6 0.14 75);
-  --shadow-panel: 0 12px 35px color-mix(in oklab, var(--foreground) 16%, transparent); --shadow-brand: 0 10px 24px color-mix(in oklab, var(--primary) 34%, transparent);
+  --shadow-panel: 0 8px 32px color-mix(in oklab, var(--foreground) 9%, transparent); --shadow-brand: 0 4px 12px color-mix(in oklab, var(--primary) 18%, transparent);
 }
 
 .dark {
@@ -52,6 +52,9 @@
   button, input, select { font: inherit; }
   input, select { outline: none; }
   input:focus, select:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 18%, transparent); }
+  input::placeholder { color: var(--muted-foreground); opacity: 0.75; }
+  input, select { color: var(--foreground); background-color: var(--surface); transition: border-color 160ms ease, box-shadow 160ms ease; }
+  h1, h2, h3 { text-wrap: balance; }
 }
 
 @utility glass-panel { background: color-mix(in oklab, var(--surface) 92%, transparent); box-shadow: var(--shadow-panel); backdrop-filter: blur(16px); }
