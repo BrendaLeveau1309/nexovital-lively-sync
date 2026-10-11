@@ -16,6 +16,11 @@
 - [x] Proceso activo por etapas: identificación (código + DNI), tamizaje (Hb/presión/pulso), donación, validación final (resultado, aptitud, motivo, fechas) + historial del donante
 
 ## Pendiente
+- [ ] Renovar la app móvil con un diseño distintivo y compacto
+- [ ] Proceso hospitalario editable y persistente, compartido entre personal del mismo hospital
+- [ ] Donación realizada/no realizada y resultados en historial
+- [ ] Vigencia de solicitudes de 24 horas y métricas por estado
+- [ ] Actividad reciente sin detalles y búsqueda administrativa de solo lectura
 - [x] Profesionalizar la presentación del acceso, app móvil y backoffice sin alterar los flujos
 - [x] Rediseño minimalista del backoffice: barra lateral roja degradada, fondo cálido, tarjetas con acentos de color y chips de estado
 - [ ] Verificar el mapa de Google en la URL de vista previa (falla en localhost por restricción de dominio de la clave)
