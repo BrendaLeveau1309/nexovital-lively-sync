@@ -17,5 +17,6 @@
 
 ## Pendiente
 - [x] Profesionalizar la presentación del acceso, app móvil y backoffice sin alterar los flujos
+- [x] Rediseño minimalista del backoffice: barra lateral roja degradada, fondo cálido, tarjetas con acentos de color y chips de estado
 - [ ] Verificar el mapa de Google en la URL de vista previa (falla en localhost por restricción de dominio de la clave)
 - [ ] Conectar los flujos demo a la base de datos real (perfiles, solicitudes, donaciones)
