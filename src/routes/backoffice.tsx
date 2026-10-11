@@ -141,7 +141,7 @@ function Backoffice() {
           <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="rounded-lg border bg-surface px-3 py-2.5 text-sm font-semibold">{["Todos", "En proceso", "Atendida", "Cancelada"].map(x => <option key={x}>{x}</option>)}</select>
           <input value={dateFilter} onChange={e => setDateFilter(e.target.value)} className="rounded-lg border bg-surface px-3 py-2.5 text-sm font-semibold" placeholder="Fecha (ej. 28 sep)" />
         </div>
-        <div className="mt-4 overflow-x-auto rounded-lg border bg-card"><div className="grid min-w-[540px] grid-cols-4 gap-2 bg-muted p-4 text-xs font-extrabold uppercase"><span>Código</span><span>Estado</span><span>Unidades</span><span>Acción</span></div>{requestResults.map(r => <div key={r.code} className="grid min-w-[540px] grid-cols-4 items-center gap-2 border-t p-4 text-sm hover:bg-muted/60 transition-colors"><b>{r.code}</b><span>{r.status}</span><span>{r.fulfilled} / {r.units}</span><Button size="sm" variant="outline" onClick={() => setDetail(r.code)}>Ver detalle</Button></div>)}{!requestResults.length && <p className="p-4 text-sm text-muted-foreground">Sin resultados para los filtros aplicados.</p>}</div>
+        <div className="mt-4 overflow-x-auto rounded-xl border bg-card shadow-sm"><div className="grid min-w-[540px] grid-cols-4 gap-2 bg-muted p-4 text-xs font-extrabold uppercase"><span>Código</span><span>Estado</span><span>Unidades</span><span>Acción</span></div>{requestResults.map(r => <div key={r.code} className="grid min-w-[540px] grid-cols-4 items-center gap-2 border-t p-4 text-sm hover:bg-muted/60 transition-colors"><b>{r.code}</b><StatusChip status={r.status} /><span>{r.fulfilled} / {r.units}</span><Button size="sm" variant="outline" onClick={() => setDetail(r.code)}>Ver detalle</Button></div>)}{!requestResults.length && <p className="p-4 text-sm text-muted-foreground">Sin resultados para los filtros aplicados.</p>}</div>
       </>}
 
       {section === "process" && <>
@@ -237,4 +237,9 @@ function Backoffice() {
 
 function InfoBox({ label, value }: { label: string; value: string }) {
   return <div className="rounded-lg bg-muted p-3"><p className="text-xs text-muted-foreground">{label}</p><p className="mt-0.5 font-extrabold">{value}</p></div>;
+}
+
+function StatusChip({ status }: { status: string }) {
+  const tone = status === "En proceso" ? "bg-primary/10 text-primary" : status === "Atendida" ? "bg-chart-teal/15 text-chart-teal" : "bg-muted text-muted-foreground";
+  return <span className={`inline-flex w-fit rounded-full px-3 py-1 text-xs font-extrabold ${tone}`}>{status}</span>;
 }
