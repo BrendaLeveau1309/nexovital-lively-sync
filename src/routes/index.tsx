@@ -93,13 +93,13 @@ function NexoVitalApp() {
   };
 
   return (
-    <main className={`${darkMode ? "dark" : ""} relative mx-auto h-[100svh] w-full max-w-[480px] overflow-hidden bg-background text-foreground shadow-panel`}>
-      {view !== "home" && <header className="absolute inset-x-0 top-0 z-20 flex h-20 items-center gap-3 bg-primary px-5 text-primary-foreground"><Button size="icon" variant="ghost" className="text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground" aria-label="Abrir menú" onClick={() => setMenuOpen(true)}><Menu /></Button><div className="flex-1"><p className="text-lg font-extrabold">NexoVital</p><p className="text-xs text-primary-foreground/80">{role === "donor" ? "Donante" : "Solicitante"}</p></div><Button size="icon" variant="ghost" className="text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground" aria-label="Notificaciones" onClick={() => setMenuPanel("notifications")}><Bell /></Button></header>}
+    <main className={`${darkMode ? "dark" : ""} mobile-app relative mx-auto h-[100svh] w-full max-w-[480px] overflow-hidden bg-mobile-canvas text-foreground shadow-panel`}>
+      {view !== "home" && <header className="mobile-header absolute inset-x-0 top-0 z-20 flex h-[72px] items-center gap-3 bg-primary px-4 text-primary-foreground"><Button size="icon" variant="ghost" className="text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground" aria-label="Abrir menú" onClick={() => setMenuOpen(true)}><Menu /></Button><div className="flex-1"><p className="text-base font-extrabold">NexoVital<span className="ml-1 text-secondary">.</span></p><p className="text-[10px] text-primary-foreground/80">{role === "donor" ? "Donante" : "Solicitante"}</p></div><Button size="icon" variant="ghost" className="text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground" aria-label="Notificaciones" onClick={() => setMenuPanel("notifications")}><Bell /></Button></header>}
       {view === "home" && (
         <>
           <FullScreenMap />
           <header className="absolute inset-x-0 top-0 z-20">
-            <div className="flex items-center justify-between bg-primary px-4 py-4 text-primary-foreground shadow-brand">
+            <div className="mobile-header flex items-center justify-between bg-primary px-3 py-3 text-primary-foreground shadow-brand">
               <Button size="icon" variant="ghost" className="text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground" aria-label="Abrir menú" onClick={() => setMenuOpen(true)}><Menu /></Button>
               <div className="min-w-0 flex-1 px-2">
                 <h1 className="truncate text-base font-extrabold text-primary-foreground">NexoVital</h1>
@@ -117,12 +117,12 @@ function NexoVitalApp() {
                  <span className="glass-panel rounded-full px-3 py-2 text-xs font-bold"><LocateFixed className="mr-1 inline size-4 text-primary" />3 centros cerca</span>
               </div>
                {showMatch && secondsLeft > 0 && (
-                <section className="glass-panel absolute inset-x-4 bottom-24 z-20 rounded-lg border border-border p-5">
+                <section className="glass-panel absolute inset-x-3 bottom-24 z-20 overflow-hidden rounded-lg border border-border p-4 border-t-4 border-t-chart-teal">
                   <div className="flex items-start justify-between gap-3">
-                    <div><p className="text-xs font-extrabold uppercase text-primary">Solicitud compatible</p><h2 className="mt-1 text-lg font-extrabold">Hospital Dos de Mayo</h2></div>
+                    <div><p className="text-[10px] font-extrabold uppercase text-chart-teal">Solicitud compatible · NV-28491</p><h2 className="mt-1 text-base font-extrabold">Hospital Dos de Mayo</h2></div>
                      <span role="timer" aria-label={`Tiempo restante: ${secondsLeft} segundos`} className="flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-xs font-extrabold"><Clock3 className="size-3.5" />00:{String(secondsLeft).padStart(2, "0")}</span>
                   </div>
-                  <div className="my-4 grid grid-cols-3 gap-2 text-center text-xs">
+                  <div className="my-3 grid grid-cols-3 gap-2 text-center text-xs">
                     <Info label="Distancia" value="2.4 km" /><Info label="Requiere" value="O+" /><Info label="Urgencia" value="Alta" urgent />
                    </div>
                   <div className="grid grid-cols-2 gap-2">
@@ -149,7 +149,7 @@ function NexoVitalApp() {
       {view === "history" && <HistoryView role={role} />}
       {view === "account" && <Account role={role} darkMode={darkMode} onToggleTheme={toggleTheme} />}
 
-      <nav className="safe-bottom absolute inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-primary-foreground/20 bg-primary px-2 pt-2 text-primary-foreground shadow-panel">
+      <nav className="mobile-nav safe-bottom absolute inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-primary-foreground/20 bg-primary px-2 pt-2 text-primary-foreground shadow-panel">
         <NavItem active={view === "home"} icon={Home} label="Inicio" onClick={() => setView("home")} />
         <NavItem active={view === "tracking"} icon={Navigation} label="Tracking" onClick={() => setView("tracking")} />
         <NavItem active={view === "history"} icon={History} label="Historial" onClick={() => setView("history")} />
