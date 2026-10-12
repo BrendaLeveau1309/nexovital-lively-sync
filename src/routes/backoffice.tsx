@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
-import { Activity, Building2, ChevronRight, ClipboardPlus, Droplets, HeartPulse, LayoutDashboard, LogOut, Search, UserPlus, Users, X, type LucideIcon } from "lucide-react";
+import { Activity, Building2, ClipboardPlus, Droplets, HeartPulse, LayoutDashboard, LogOut, Search, UserPlus, Users, X, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/backoffice")({
