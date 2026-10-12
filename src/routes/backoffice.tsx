@@ -37,11 +37,23 @@ const initialStaff: StaffMember[] = [
   { name: "Carlos Ruiz", document: "DNI 41236789", center: "Hospital Edgardo Rebagliati", active: true },
   { name: "María Vega", document: "DNI 70981234", center: "Clínica Internacional", active: false },
 ];
-const initialRequests: Request[] = [
-  { code: "NV-28491", patient: "J. Quispe", patientDoc: "DNI 45678912", blood: "O", rh: "+", units: 3, fulfilled: 2, urgency: "Alta", status: "En proceso", created: "28 sep 2026", closed: null, donations: [{ alias: "Donante 1", status: "En camino", result: "Pendiente" }, { alias: "Donante 2", status: "Exitosa", result: "Donación exitosa" }] },
-  { code: "NV-28473", patient: "M. Flores", patientDoc: "DNI 40881234", blood: "A", rh: "+", units: 2, fulfilled: 2, urgency: "Media", status: "Atendida", created: "20 sep 2026", closed: "22 sep 2026", donations: [{ alias: "Donante 1", status: "Exitosa", result: "Donación exitosa" }] },
-  { code: "NV-28441", patient: "R. Paredes", patientDoc: "DNI 71234560", blood: "B", rh: "-", units: 1, fulfilled: 0, urgency: "Baja", status: "Cancelada", created: "10 sep 2026", closed: "11 sep 2026", donations: [] },
+const DAY = 24 * 60 * 60 * 1000;
+const seedRequests: (Request & { createdAt: number })[] = [
+  { code: "NV-28491", patient: "J. Quispe", patientDoc: "DNI 45678912", blood: "O", rh: "+", units: 3, fulfilled: 1, urgency: "Alta", status: "En proceso", created: "hoy", closed: null, createdAt: Date.now() - 2 * 60 * 60 * 1000, donations: [{ alias: "Donante 1", status: "Exitosa", result: "Donación exitosa · APTO" }, { alias: "Donante 2", status: "No realizada", result: "Donación no realizada" }] },
+  { code: "NV-28480", patient: "L. Ramos", patientDoc: "DNI 46789123", blood: "A", rh: "-", units: 2, fulfilled: 0, urgency: "Alta", status: "En proceso", created: "ayer", closed: null, createdAt: Date.now() - 30 * 60 * 60 * 1000, donations: [] },
+  { code: "NV-28473", patient: "M. Flores", patientDoc: "DNI 40881234", blood: "A", rh: "+", units: 2, fulfilled: 2, urgency: "Media", status: "Atendida", created: "20 sep 2026", closed: "21 sep 2026", createdAt: 0, donations: [{ alias: "Donante 1", status: "Exitosa", result: "Donación exitosa · APTO" }, { alias: "Donante 2", status: "No exitosa", result: "Donación no exitosa · NO APTO TEMPORALMENTE" }] },
+  { code: "NV-28441", patient: "R. Paredes", patientDoc: "DNI 71234560", blood: "B", rh: "-", units: 1, fulfilled: 0, urgency: "Baja", status: "Cancelada", created: "10 sep 2026", closed: "11 sep 2026", createdAt: 0, donations: [] },
 ];
+// Regla: una solicitud solo tiene vigencia de un día; vencida pasa a Cancelada.
+const initialRequests: Request[] = seedRequests.map(({ createdAt, ...r }) => r.status === "En proceso" && Date.now() - createdAt > DAY ? { ...r, status: "Cancelada", closed: "Vencida (24 h)" } : r);
+
+type Step = "identify" | "tamizaje" | "donacion" | "validacion";
+const STEPS: [Step, string][] = [["identify", "Identificación"], ["tamizaje", "Tamizaje"], ["donacion", "Donación"], ["validacion", "Validación final"]];
+const stepIndex = (s: Step) => STEPS.findIndex(([id]) => id === s);
+type ProcessRecord = { code: string; donorDoc: string; step: Step; hb?: string; bp?: string; pulse?: string; donation?: string; updatedBy?: string };
+const PROCESS_KEY = "nexovital-hospital-processes";
+const loadProcesses = (): Record<string, ProcessRecord> => { try { return JSON.parse(localStorage.getItem(PROCESS_KEY) ?? "{}"); } catch { return {}; } };
+const saveProcesses = (v: Record<string, ProcessRecord>) => localStorage.setItem(PROCESS_KEY, JSON.stringify(v));
 
 const donorHistoryDemo = [
   { date: "12 jun 2026", place: "Clínica Internacional", result: "Exitosa", hb: "13.8", bp: "120/80", pulse: 72 },
@@ -64,8 +76,10 @@ function Backoffice() {
   const [notice, setNotice] = useState("");
   const [recover, setRecover] = useState(false);
   const [newCode, setNewCode] = useState<string | null>(null);
-  const [processStep, setProcessStep] = useState<"identify" | "tamizaje" | "donacion" | "validacion">("identify");
+  const [processStep, setProcessStep] = useState<Step>("identify");
   const [processError, setProcessError] = useState("");
+  const [record, setRecord] = useState<ProcessRecord | null>(null);
+  const [editing, setEditing] = useState(false);
 
   const open = (kind: DialogKind) => { setNotice(""); setDialog(kind); };
   const navigate = (next: Section) => { setSection(next); setNotice(""); setQuery(""); setSearch(""); setDetail(null); };
@@ -113,23 +127,39 @@ function Backoffice() {
     const code = String(data.get("code") ?? "").trim().toUpperCase();
     const doc = String(data.get("donorDoc") ?? "").trim();
     const match = requests.find(r => r.code === code && r.status === "En proceso");
-    if (!match || doc.length < 6) { setProcessError("No encontramos un proceso activo con ese código y DNI."); return; }
-    setProcessError(""); setProcessStep("tamizaje");
+    if (!match || doc.length < 6) { setProcessError("No encontramos una solicitud vigente con ese código y DNI."); return; }
+    const all = loadProcesses();
+    const existing = all[`${code}|${doc}`] ?? { code, donorDoc: doc, step: "tamizaje" as Step };
+    all[`${code}|${doc}`] = existing; saveProcesses(all);
+    setRecord(existing); setEditing(false); setProcessError(""); setProcessStep(existing.step);
+  };
+  const updateRecord = (patch: Partial<ProcessRecord>) => {
+    if (!record) return;
+    const next = { ...record, ...patch, updatedBy: "Valeria M." };
+    const all = loadProcesses(); all[`${next.code}|${next.donorDoc}`] = next; saveProcesses(all); setRecord(next);
+  };
+  const goStep = (step: Step) => { setEditing(false); setProcessStep(step); if (record) updateRecord({ step }); };
+  const finishProcess = (status: string, result: string) => {
+    if (!record) return;
+    const ok = status === "Exitosa";
+    setRequests(rs => rs.map(r => r.code === record.code ? { ...r, fulfilled: ok ? Math.min(r.units, r.fulfilled + 1) : r.fulfilled, donations: [...r.donations, { alias: `Donante ${record.donorDoc}`, status, result }] } : r));
+    const all = loadProcesses(); delete all[`${record.code}|${record.donorDoc}`]; saveProcesses(all);
+    setRecord(null); setProcessStep("identify"); setNotice(`Proceso cerrado: ${result}. Se registró en el historial de la solicitud.`);
   };
 
   return <main className="flex min-h-screen bg-bo-canvas"><aside className="bo-sidebar hidden w-64 shrink-0 p-6 text-primary-foreground md:flex md:flex-col"><div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-lg bg-primary-foreground/15"><HeartPulse /></span><b className="text-xl">NexoVital</b></div><p className="mt-8 text-xs font-extrabold uppercase text-primary-foreground/70">{role === "admin" ? "Administración" : "Hospital Dos de Mayo"}</p><nav className="mt-5 space-y-2">{items.map(({ id, label, icon: Icon }) => <Button key={id} className={`h-11 w-full justify-start border-0 ${section === id ? "bg-primary-foreground text-primary hover:bg-primary-foreground" : "bg-transparent text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground"}`} variant="ghost" onClick={() => navigate(id)}><Icon />{label}</Button>)}</nav><Button className="mt-auto justify-start bg-transparent text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground" variant="ghost" onClick={() => setEntered(false)}><LogOut />Cerrar sesión</Button></aside><section className="min-w-0 flex-1"><header className="flex min-h-20 flex-wrap items-center justify-between gap-3 border-b bg-surface px-5 py-3 lg:px-8"><div><p className="text-xs font-extrabold uppercase text-primary">{role === "admin" ? "Administrador" : "Personal hospitalario"}</p><h1 className="text-xl font-extrabold">NexoVital <span className="font-medium text-muted-foreground">/ Panel operativo</span></h1></div><div className="flex items-center gap-2"><Button variant="outline" onClick={toggleRole}>Cambiar rol demo</Button><span className="grid size-10 place-items-center rounded-full bg-primary font-extrabold text-primary-foreground">VM</span></div></header><nav className="flex gap-1 overflow-x-auto border-b bg-surface px-4 py-2 md:hidden">{items.map(({ id, label }) => <Button key={id} size="sm" variant={section === id ? "default" : "ghost"} onClick={() => navigate(id)}>{label}</Button>)}<Button size="icon" variant="ghost" aria-label="Cerrar sesión" onClick={() => setEntered(false)}><LogOut /></Button></nav><div className="mx-auto max-w-7xl p-5 lg:p-10">{notice && <p role="status" className="mb-5 rounded-lg bg-accent p-3 text-sm font-bold text-accent-foreground">{notice}</p>}
 
       {section === "dashboard" && <>
         <div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-sm font-bold text-primary">NexoVital</p><h2 className="mt-1 text-3xl font-extrabold">{role === "admin" ? "Red de establecimientos" : "Buenos días, Valeria"}</h2><p className="mt-1 text-muted-foreground">{role === "admin" ? "Busca un establecimiento y gestiona las cuentas de su personal." : "Estas son las atenciones que requieren seguimiento."}</p></div><Button variant="vivid" size="lg" onClick={() => open(role === "admin" ? "staff" : "request")}><ClipboardPlus />{role === "admin" ? "Registrar personal" : "Nueva solicitud"}</Button></div>
-        <div className="mt-8 grid gap-4 sm:grid-cols-3">{((role === "admin" ? [[String(centers.filter(c => c.active).length), "Establecimientos activos", Building2], [String(staff.filter(s => s.active).length), "Cuentas activas", Users], [String(staff.filter(s => !s.active).length), "Cuentas desactivadas", UserPlus]] : [[String(requests.length), "Solicitudes", Droplets], ["2", "Donantes en camino", Users], ["1", "En tamizaje", Activity]]) as [string, string, LucideIcon][]).map(([value, label, Icon], i) => <article key={label} className={`rounded-xl border p-6 shadow-sm ${["tint-primary", "tint-teal", "tint-gold"][i % 3]}`}><span className={`grid size-10 place-items-center rounded-md ${["bg-primary text-primary-foreground", "bg-chart-teal text-primary-foreground", "bg-chart-gold text-secondary-foreground"][i % 3]}`}><Icon className="size-5" /></span><p className="mt-4 text-3xl font-extrabold">{value}</p><p className="text-sm text-muted-foreground">{label}</p></article>)}</div>
+        <div className="mt-8 grid gap-4 sm:grid-cols-3">{((role === "admin" ? [[String(centers.filter(c => c.active).length), "Establecimientos activos", Building2], [String(staff.filter(s => s.active).length), "Cuentas activas", Users], [String(staff.filter(s => !s.active).length), "Cuentas desactivadas", UserPlus]] : [[String(requests.filter(r => r.status === "En proceso").length), "Solicitudes en proceso", Activity], [String(requests.filter(r => r.status === "Atendida").length), "Atendidas", Droplets], [String(requests.filter(r => r.status === "Cancelada").length), "Canceladas", Users]]) as [string, string, LucideIcon][]).map(([value, label, Icon], i) => <article key={label} className={`rounded-xl border p-6 shadow-sm ${["tint-primary", "tint-teal", "tint-gold"][i % 3]}`}><span className={`grid size-10 place-items-center rounded-md ${["bg-primary text-primary-foreground", "bg-chart-teal text-primary-foreground", "bg-chart-gold text-secondary-foreground"][i % 3]}`}><Icon className="size-5" /></span><p className="mt-4 text-3xl font-extrabold">{value}</p><p className="text-sm text-muted-foreground">{label}</p></article>)}</div>
         <div className="mt-7 border-t pt-6">
           <h3 className="text-lg font-extrabold">{role === "admin" ? "Buscar por establecimiento" : "Actividad reciente"}</h3>
           <form className="mt-4 flex gap-2" onSubmit={event => { event.preventDefault(); setQuery(search.trim()); }}><div className="flex min-w-0 flex-1 items-center gap-2 rounded-lg border bg-surface px-4"><Search className="size-4 text-muted-foreground" /><input value={search} onChange={event => setSearch(event.target.value)} className="w-full py-3" placeholder={role === "admin" ? "Nombre del establecimiento" : "Código de solicitud"} /></div><Button variant="vivid">Buscar</Button></form>
           {role === "admin" ? (query ? (centerResults.length ? centerResults.map(c => <div key={c.name} className="mt-3 rounded-lg border bg-card p-4">
             <div className="flex flex-wrap items-center justify-between gap-3"><div><b>{c.name}</b><p className="text-xs text-muted-foreground">{c.address}</p></div><span className={`text-xs font-extrabold ${c.active ? "text-primary" : "text-muted-foreground"}`}>{c.active ? "ACTIVO" : "INACTIVO"}</span></div>
-            <div className="mt-3 space-y-2 border-t pt-3">{staff.filter(s => s.center === c.name).map(s => <div key={s.document} className="flex items-center justify-between gap-3 text-sm"><span className="font-semibold">{s.name} · {s.document}</span><Button size="sm" variant={s.active ? "outline" : "vivid"} onClick={() => toggleStaff(s.document)}>{s.active ? "Desactivar" : "Activar"}</Button></div>)}{!staff.some(s => s.center === c.name) && <p className="text-sm text-muted-foreground">Sin personal registrado.</p>}</div>
-          </div>) : <p className="mt-4 text-sm text-muted-foreground">No se encontraron establecimientos.</p>) : <p className="mt-4 text-sm text-muted-foreground">Ingresa el nombre de un establecimiento para consultar sus cuentas activas.</p>)
-          : (query ? (requests.filter(r => r.code.toLowerCase().includes(query.toLowerCase())).map(r => <Button key={r.code} variant="ghost" className="mt-3 flex h-auto w-full items-center justify-between gap-3 rounded-xl border bg-card p-4 text-left shadow-sm" onClick={() => setDetail(r.code)}><span className="flex min-w-0 items-center gap-3"><b className="truncate">{r.code}</b><StatusChip status={r.status} /></span><ChevronRight /></Button>)) : requests.slice(0, 3).map(r => <Button key={r.code} variant="ghost" className="mt-3 flex h-auto w-full items-center justify-between gap-3 rounded-xl border bg-card p-4 text-left shadow-sm" onClick={() => setDetail(r.code)}><span className="flex min-w-0 items-center gap-3"><b className="truncate">{r.code}</b><StatusChip status={r.status} /></span><ChevronRight /></Button>))}
+            <div className="mt-3 space-y-2 border-t pt-3">{staff.filter(s => s.center === c.name).map(s => <div key={s.document} className="flex items-center justify-between gap-3 text-sm"><span className="font-semibold">{s.name} · {s.document}</span><span className={`text-xs font-extrabold ${s.active ? "text-chart-teal" : "text-muted-foreground"}`}>{s.active ? "ACTIVO" : "INACTIVO"}</span></div>)}{!staff.some(s => s.center === c.name) && <p className="text-sm text-muted-foreground">Sin personal registrado.</p>}</div>
+          </div>) : <p className="mt-4 text-sm text-muted-foreground">No se encontraron establecimientos.</p>) : <p className="mt-4 text-sm text-muted-foreground">Ingresa el nombre de un establecimiento para consultar su personal.</p>)
+          : (query ? requests.filter(r => r.code.toLowerCase().includes(query.toLowerCase())) : requests.slice(0, 5)).map(r => <div key={r.code} className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card p-4 shadow-sm"><span className="flex min-w-0 items-center gap-3"><b className="truncate">{r.code}</b><StatusChip status={r.status} /></span><span className="text-sm text-muted-foreground">{r.created}</span></div>)}
         </div>
       </>}
 
@@ -148,32 +178,41 @@ function Backoffice() {
         <h2 className="text-3xl font-extrabold">Registro de proceso activo</h2><p className="text-muted-foreground">Registra cada etapa de la atención del donante.</p>
         <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_320px]">
           <div className="rounded-lg border bg-card p-5">
-            <ol className="flex flex-wrap gap-2 text-xs font-extrabold">{[["identify", "Identificación"], ["tamizaje", "Tamizaje"], ["donacion", "Donación"], ["validacion", "Validación final"]].map(([id, label], i) => <li key={id} className={`rounded-full px-3 py-1.5 ${processStep === id ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>{i + 1}. {label}</li>)}</ol>
+            <ol className="flex flex-wrap gap-2 text-xs font-extrabold">{STEPS.map(([id, label], i) => <li key={id} className={`rounded-full px-3 py-1.5 ${processStep === id ? "bg-primary text-primary-foreground" : stepIndex(id) < stepIndex(processStep) ? "bg-chart-teal text-primary-foreground" : "bg-muted text-muted-foreground"}`}>{i + 1}. {label}</li>)}</ol>
+            {record && processStep !== "identify" && <p className="mt-4 rounded-lg bg-accent p-3 text-xs font-semibold text-accent-foreground">Proceso {record.code} · {record.donorDoc}{record.updatedBy ? ` · Último registro: ${record.updatedBy}` : ""}. Cualquier personal del hospital puede continuar desde aquí.</p>}
             {processStep === "identify" && <form className="mt-5" onSubmit={identifyProcess}>
               <div className="grid gap-3 sm:grid-cols-2"><label className="text-sm font-bold">Código de solicitud<input name="code" required className="mt-2 w-full rounded-lg border p-3" placeholder="NV-28491" /></label><label className="text-sm font-bold">DNI del donante<input name="donorDoc" required className="mt-2 w-full rounded-lg border p-3" placeholder="Documento del donante" /></label></div>
               <Button className="mt-5" variant="vivid">Validar proceso activo</Button>
               {processError && <p role="alert" className="mt-3 rounded-lg bg-muted p-3 text-sm font-semibold">{processError}</p>}
             </form>}
-            {processStep === "tamizaje" && <form className="mt-5" onSubmit={e => { e.preventDefault(); setProcessStep("donacion"); }}>
+            {processStep === "tamizaje" && record && <form key={`t-${editing}`} className="mt-5" onSubmit={e => { e.preventDefault(); const d = new FormData(e.currentTarget); updateRecord({ hb: String(d.get("hb")), bp: String(d.get("bp")), pulse: String(d.get("pulse")) }); setEditing(false); }}>
               <h3 className="font-extrabold">Tamizaje</h3>
-              <div className="mt-3 grid gap-3 sm:grid-cols-3">{["Hemoglobina", "Presión arterial", "Pulso"].map(x => <label key={x} className="text-sm font-bold">{x}<input required className="mt-2 w-full rounded-lg border p-3" placeholder="Registrar" /></label>)}</div>
-              <Button className="mt-5" variant="vivid">Guardar y continuar</Button>
+              <div className="mt-3 grid gap-3 sm:grid-cols-3">{([["hb", "Hemoglobina (g/dL)"], ["bp", "Presión arterial"], ["pulse", "Pulso (ppm)"]] as const).map(([k, x]) => <label key={k} className="text-sm font-bold">{x}<input name={k} required readOnly={!!record.hb && !editing} defaultValue={record[k] ?? ""} className="mt-2 w-full rounded-lg border p-3 read-only:bg-muted" placeholder="Registrar" /></label>)}</div>
+              <div className="mt-5 flex flex-wrap gap-2">
+                {(!record.hb || editing) && <Button variant="vivid">Guardar</Button>}
+                {record.hb && !editing && <Button type="button" variant="outline" onClick={() => setEditing(true)}>Editar</Button>}
+                {record.hb && !editing && <Button type="button" variant="vivid" onClick={() => goStep("donacion")}>Continuar a donación</Button>}
+              </div>
             </form>}
-            {processStep === "donacion" && <div className="mt-5">
+            {processStep === "donacion" && record && <div className="mt-5">
               <h3 className="font-extrabold">Donación</h3>
-              <p className="mt-2 text-sm text-muted-foreground">Confirma que la extracción se realizó según protocolo.</p>
-              <Button className="mt-5" variant="vivid" onClick={() => setProcessStep("validacion")}>Donación realizada, continuar</Button>
+              <p className="mt-2 text-sm text-muted-foreground">Indica si la extracción se realizó según protocolo.</p>
+              <div className="mt-5 flex flex-wrap gap-2">
+                <Button variant="outline" onClick={() => goStep("tamizaje")}>Volver a tamizaje</Button>
+                <Button variant="vivid" onClick={() => { updateRecord({ donation: "realizada" }); goStep("validacion"); }}>Donación realizada</Button>
+                <Button variant="destructive" onClick={() => finishProcess("No realizada", "Donación no realizada")}>Donación no realizada</Button>
+              </div>
             </div>}
-            {processStep === "validacion" && <form className="mt-5" onSubmit={e => { e.preventDefault(); setProcessStep("identify"); setNotice("Validación final registrada. El donante y el solicitante fueron notificados."); }}>
+            {processStep === "validacion" && record && <form className="mt-5" onSubmit={e => { e.preventDefault(); const d = new FormData(e.currentTarget); const ok = d.get("result") === "Donación exitosa"; finishProcess(ok ? "Exitosa" : "No exitosa", `${d.get("result")} · ${d.get("fitness")}`); }}>
               <h3 className="font-extrabold">Validación final</h3>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <label className="text-sm font-bold">Resultado<select className="mt-2 w-full rounded-lg border bg-surface p-3"><option>Donación exitosa</option><option>Donación no exitosa</option></select></label>
-                <label className="text-sm font-bold">Aptitud del donante<select className="mt-2 w-full rounded-lg border bg-surface p-3"><option>APTO</option><option>NO APTO TEMPORALMENTE</option><option>NO APTO PERMANENTEMENTE</option></select></label>
+                <label className="text-sm font-bold">Resultado<select name="result" className="mt-2 w-full rounded-lg border bg-surface p-3"><option>Donación exitosa</option><option>Donación no exitosa</option></select></label>
+                <label className="text-sm font-bold">Aptitud del donante<select name="fitness" className="mt-2 w-full rounded-lg border bg-surface p-3"><option>APTO</option><option>NO APTO TEMPORALMENTE</option><option>NO APTO PERMANENTEMENTE</option></select></label>
                 <label className="text-sm font-bold sm:col-span-2">Motivo<input className="mt-2 w-full rounded-lg border p-3" placeholder="Opcional si la donación fue exitosa" /></label>
                 <label className="text-sm font-bold">Fecha inicio<input type="date" className="mt-2 w-full rounded-lg border p-3" /></label>
                 <label className="text-sm font-bold">Fecha fin<input type="date" className="mt-2 w-full rounded-lg border p-3" /></label>
               </div>
-              <Button className="mt-5" variant="vivid">Registrar validación</Button>
+              <div className="mt-5 flex flex-wrap gap-2"><Button type="button" variant="outline" onClick={() => goStep("donacion")}>Editar donación</Button><Button variant="vivid">Registrar validación</Button></div>
             </form>}
           </div>
           <aside className="rounded-lg border bg-card p-5"><h3 className="font-extrabold">Historial de donaciones</h3><p className="mt-1 text-sm text-muted-foreground">Consulta limitada al donante validado.</p>{processStep === "identify" ? <p className="mt-3 text-sm text-muted-foreground">Valida el código y DNI para consultar los antecedentes.</p> : donorHistoryDemo.map(x => <div key={x.date} className="mt-3 rounded-lg bg-muted p-3 text-sm"><p className="font-bold">{x.date} · {x.result}</p><p className="text-xs text-muted-foreground">{x.place} · Hb {x.hb} · {x.bp} · {x.pulse} ppm</p></div>)}</aside>
