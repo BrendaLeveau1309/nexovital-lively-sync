@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Activity, Bell, CalendarDays, ChevronRight, Clock3, Droplets, HeartPulse, History, Home, LocateFixed, LogOut, Mail, Menu, Moon, Navigation, Phone, ShieldCheck, Sun, UserRound, X } from "lucide-react";
+import { Activity, Bell, CalendarDays, ChevronRight, Clock3, Droplets, HeartPulse, History, Home, LocateFixed, LogOut, Mail, Menu, Moon, Navigation, Phone, QrCode, ShieldCheck, Share2, Sun, UserRound, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FullScreenMap } from "@/components/nexovital/full-screen-map";
 import donationCare from "@/assets/donation-care.jpg";
@@ -351,9 +351,32 @@ function HistoryView({ role }: { role: Role }) {
   </div>;
 }
 
-function Account({role,darkMode,onToggleTheme}:{role:Role;darkMode:boolean;onToggleTheme:()=>void}){return <div className="h-full overflow-y-auto px-5 pb-28 pt-28">
+function Account({role,darkMode,onToggleTheme}:{role:Role;darkMode:boolean;onToggleTheme:()=>void}){
+  const [copied, setCopied] = useState(false);
+  const shareText = `🩸 Soy donante de sangre voluntario en NexoVital. Grupo: O+ • Donaciones: ${donorHistory.length} • ¡Dona sangre y salva vidas!`;
+  const shareDonorCard = async () => {
+    try {
+      if (navigator.share) { await navigator.share({ title: "NexoVital", text: shareText }); return; }
+      await navigator.clipboard.writeText(shareText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch { /* el usuario canceló compartir */ }
+  };
+  return <div className="h-full overflow-y-auto px-5 pb-28 pt-28">
   <p className="text-xs font-extrabold uppercase text-primary">Mi cuenta</p><h1 className="mt-2 text-2xl font-extrabold">Cuenta</h1>
   <div className="mt-6 flex items-center gap-4 border-b pb-6"><div className="grid size-16 shrink-0 place-items-center rounded-full bg-accent text-accent-foreground"><UserRound className="size-8"/></div><div className="min-w-0"><h2 className="text-xl font-extrabold">Valeria Mendoza</h2><p className="mt-1 text-sm text-muted-foreground">{role === "donor" ? "Perfil de donante" : "Perfil de solicitante"}</p></div></div>
+  {role === "donor" && <section className="donor-card mt-6 rounded-xl p-5 text-primary-foreground" aria-label="Carnet digital de donante">
+    <div className="flex items-start justify-between gap-3">
+      <p className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-widest text-primary-foreground/80"><ShieldCheck className="size-4"/>Carnet digital de donante</p>
+      <span className="grid size-12 shrink-0 place-items-center rounded-lg bg-primary-foreground text-lg font-extrabold text-primary">O+</span>
+    </div>
+    <h2 className="mt-3 text-xl font-extrabold">Valeria Mendoza</h2>
+    <p className="text-xs font-semibold text-primary-foreground/75">Registro de Donantes Voluntarios</p>
+    <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-primary-foreground/25 pt-4">
+      <p className="flex items-center gap-2 text-xs font-bold text-primary-foreground/80"><QrCode className="size-4"/>ID-DON-928174</p>
+      <Button size="sm" variant="outline" className="gap-2 border-primary-foreground/30 bg-primary-foreground/15 text-primary-foreground hover:bg-primary-foreground/25 hover:text-primary-foreground" onClick={shareDonorCard}><Share2 className="size-4"/>{copied ? "¡Texto copiado!" : "Compartir"}</Button>
+    </div>
+  </section>}
   <section className="mt-6"><h2 className="text-xs font-extrabold uppercase text-muted-foreground">Datos personales</h2><div className="mt-2 divide-y border-y"><AccountRow icon={ShieldCheck} label="Documento" value="DNI 72918421"/><AccountRow icon={Mail} label="Correo electrónico" value="valeria@email.com"/><AccountRow icon={Phone} label="Teléfono" value="+51 987 654 321"/></div></section>
   {role === "donor" && <section className="mt-7"><h2 className="text-xs font-extrabold uppercase text-muted-foreground">Información de donación</h2><div className="mt-2 divide-y border-y"><AccountRow icon={Droplets} label="Grupo sanguíneo" value="O positivo"/><AccountRow icon={HeartPulse} label="Disponibilidad" value="Disponible"/><AccountRow icon={Activity} label="Aptitud" value="APTO"/></div></section>}
   <section className="mt-7"><h2 className="text-xs font-extrabold uppercase text-muted-foreground">Apariencia</h2><Button variant="ghost" className="mt-2 flex h-auto w-full justify-start gap-3 border-y py-4 text-left text-foreground" onClick={onToggleTheme} aria-label={darkMode ? "Activar modo claro" : "Activar modo oscuro"}>{darkMode ? <Sun className="size-5 text-primary"/> : <Moon className="size-5 text-primary"/>}<span className="flex-1 font-bold">{darkMode ? "Modo claro" : "Modo oscuro"}</span></Button></section>
