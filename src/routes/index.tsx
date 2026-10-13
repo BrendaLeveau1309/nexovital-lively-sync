@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Activity, Bell, CalendarDays, ChevronRight, Clock3, Droplets, HeartPulse, History, Home, LocateFixed, LogOut, Mail, Menu, Moon, Navigation, Phone, ShieldCheck, Sun, UserRound, X } from "lucide-react";
+import { Activity, Bell, CalendarDays, ChevronRight, Clock3, Droplets, HeartPulse, History, Home, LocateFixed, LogOut, Mail, Menu, Moon, Navigation, Phone, QrCode, ShieldCheck, Share2, Sun, UserRound, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FullScreenMap } from "@/components/nexovital/full-screen-map";
 import donationCare from "@/assets/donation-care.jpg";

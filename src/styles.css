@@ -71,6 +71,25 @@
 @utility tint-gold { background: color-mix(in oklab, var(--chart-gold) 13%, var(--surface)); }
 @utility bo-sidebar { background: linear-gradient(180deg, var(--primary), color-mix(in oklab, var(--primary) 78%, oklch(0.3 0.07 24))); }
 
+.donor-card {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 150% at 100% 0%, var(--primary-lift) 0%, transparent 55%),
+    linear-gradient(135deg, var(--primary), color-mix(in oklab, var(--primary) 58%, var(--primary-deep)));
+  box-shadow: 0 16px 40px -20px color-mix(in oklab, var(--primary) 60%, transparent);
+}
+.donor-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(color-mix(in oklab, var(--primary-foreground) 25%, transparent) 1px, transparent 1.6px);
+  background-size: 17px 17px;
+  opacity: 0.22;
+  pointer-events: none;
+}
+.donor-card > * { position: relative; }
+
 .bo-hero {
   position: relative;
   overflow: hidden;
