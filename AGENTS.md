@@ -13,3 +13,5 @@
 - Use Lovable Cloud with row-level policies for persistent user and hospital data, because medical workflows require tenant isolation.
 - Render maps with Google Maps JavaScript using the public connector key; use authenticated server calls for any Places data.
 - Keep shared visual roles in semantic CSS tokens and use the shared Button for controls, so mobile and institutional views remain visually consistent.
+- Account reads the authenticated profile and successful donation count under existing RLS, with an explicitly labeled signed-out demo fallback, so donor identity and share text never silently substitute demo data for a real user.
+- Backoffice demo stage counters derive from the same persisted process records as the editor and refresh on storage events, so counts track stage transitions without a second source of truth.
