@@ -15,3 +15,4 @@
 - Keep shared visual roles in semantic CSS tokens and use the shared Button for controls, so mobile and institutional views remain visually consistent.
 - Account reads the authenticated profile and successful donation count under existing RLS, with an explicitly labeled signed-out demo fallback, so donor identity and share text never silently substitute demo data for a real user.
 - Backoffice demo stage counters derive from the same persisted process records as the editor and refresh on storage events, so counts track stage transitions without a second source of truth.
+- Derive donor recognition and red-cell compatibility with pure shared helpers, and display compatibility separately from the carnet, so profile-specific rules remain testable without storing duplicate data.
