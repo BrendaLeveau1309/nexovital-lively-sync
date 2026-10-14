@@ -16,7 +16,7 @@
 - [x] Proceso activo por etapas: identificación (código + DNI), tamizaje (Hb/presión/pulso), donación, validación final (resultado, aptitud, motivo, fechas) + historial del donante
 
 ## Pendiente
-- [ ] Reemplazar carnet de Cuenta con datos del perfil y compartir/copiar; actualizar métricas de bienvenida y etapas del proceso.
+- [x] Reemplazar carnet de Cuenta con lectura del perfil y compartir/copiar; actualizar métricas de bienvenida y etapas del proceso (verificado en demo; la cuenta de prueba no tiene perfil disponible).
 - [ ] Renovar la app móvil con un diseño distintivo y compacto
 - [x] Proceso hospitalario editable y persistente, compartido entre personal del mismo hospital
 - [x] Donación realizada/no realizada y resultados en historial
