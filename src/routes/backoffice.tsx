@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Activity, Building2, ClipboardPlus, Droplets, HeartPulse, LayoutDashboard, LogOut, Search, UserPlus, Users, X, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -80,6 +80,17 @@ function Backoffice() {
   const [processError, setProcessError] = useState("");
   const [record, setRecord] = useState<ProcessRecord | null>(null);
   const [editing, setEditing] = useState(false);
+  const [processes, setProcesses] = useState<Record<string, ProcessRecord>>({});
+  useEffect(() => {
+    const refresh = () => setProcesses(loadProcesses());
+    refresh();
+    window.addEventListener("storage", refresh);
+    return () => window.removeEventListener("storage", refresh);
+  }, []);
+  const persistProcesses = (all: Record<string, ProcessRecord>) => { saveProcesses(all); setProcesses(all); };
+  const activeProcesses = Object.values(processes).filter(p => requests.some(r => r.code === p.code && r.status === "En proceso"));
+  const donationUsers = new Set(activeProcesses.filter(p => p.step === "donacion").map(p => p.donorDoc)).size;
+  const validationUsers = new Set(activeProcesses.filter(p => p.step === "validacion").map(p => p.donorDoc)).size;
 
   const open = (kind: DialogKind) => { setNotice(""); setDialog(kind); };
   const navigate = (next: Section) => { setSection(next); setNotice(""); setQuery(""); setSearch(""); setDetail(null); };
@@ -130,20 +141,20 @@ function Backoffice() {
     if (!match || doc.length < 6) { setProcessError("No encontramos una solicitud vigente con ese código y DNI."); return; }
     const all = loadProcesses();
     const existing = all[`${code}|${doc}`] ?? { code, donorDoc: doc, step: "tamizaje" as Step };
-    all[`${code}|${doc}`] = existing; saveProcesses(all);
+    all[`${code}|${doc}`] = existing; persistProcesses(all);
     setRecord(existing); setEditing(false); setProcessError(""); setProcessStep(existing.step);
   };
   const updateRecord = (patch: Partial<ProcessRecord>) => {
     if (!record) return;
     const next = { ...record, ...patch, updatedBy: "Valeria M." };
-    const all = loadProcesses(); all[`${next.code}|${next.donorDoc}`] = next; saveProcesses(all); setRecord(next);
+    const all = loadProcesses(); all[`${next.code}|${next.donorDoc}`] = next; persistProcesses(all); setRecord(next);
   };
   const goStep = (step: Step) => { setEditing(false); setProcessStep(step); if (record) updateRecord({ step }); };
   const finishProcess = (status: string, result: string) => {
     if (!record) return;
     const ok = status === "Exitosa";
     setRequests(rs => rs.map(r => r.code === record.code ? { ...r, fulfilled: ok ? Math.min(r.units, r.fulfilled + 1) : r.fulfilled, donations: [...r.donations, { alias: `Donante ${record.donorDoc}`, status, result }] } : r));
-    const all = loadProcesses(); delete all[`${record.code}|${record.donorDoc}`]; saveProcesses(all);
+    const all = loadProcesses(); delete all[`${record.code}|${record.donorDoc}`]; persistProcesses(all);
     setRecord(null); setProcessStep("identify"); setNotice(`Proceso cerrado: ${result}. Se registró en el historial de la solicitud.`);
   };
 
@@ -162,9 +173,9 @@ function Backoffice() {
               </div>
             </div>
             <div className="ml-auto w-full max-w-[230px] rounded-xl border border-primary-foreground/25 bg-primary-foreground/10 p-5">
-              <span className="grid size-11 place-items-center rounded-lg bg-primary-foreground/15">{role === "admin" ? <Building2 className="size-5" /> : <Activity className="size-5" />}</span>
-              <p className="mt-4 text-4xl font-extrabold">{role === "admin" ? centers.filter(c => c.active).length : requests.filter(r => r.status === "En proceso").length}</p>
-              <p className="mt-1 text-[11px] font-extrabold uppercase tracking-[0.1em] text-primary-foreground/80">{role === "admin" ? "Establecimientos activos" : "Solicitudes en proceso"}</p>
+              <span className="grid size-11 place-items-center rounded-lg bg-primary-foreground/15">{role === "admin" ? <Users className="size-5" /> : <Activity className="size-5" />}</span>
+              <p className="mt-4 text-4xl font-extrabold">{role === "admin" ? staff.filter(s => s.active).length : activeProcesses.length}</p>
+              <p className="mt-1 text-[11px] font-extrabold uppercase text-primary-foreground/80">{role === "admin" ? "Personal de salud activo" : "Procesos activos"}</p>
             </div>
           </div>
         </section>
@@ -193,6 +204,10 @@ function Backoffice() {
 
       {section === "process" && <>
         <h2 className="text-3xl font-extrabold">Registro de proceso activo</h2><p className="text-muted-foreground">Registra cada etapa de la atención del donante.</p>
+        <div className="mt-5 grid grid-cols-2 gap-3">
+          <article aria-label="Usuarios en donación" className="tint-teal rounded-lg border p-4"><Droplets className="size-5 text-chart-teal"/><p className="mt-2 text-2xl font-extrabold">{donationUsers}</p><p className="text-sm font-semibold">En donación</p></article>
+          <article aria-label="Usuarios en validación final" className="tint-gold rounded-lg border p-4"><HeartPulse className="size-5 text-chart-gold"/><p className="mt-2 text-2xl font-extrabold">{validationUsers}</p><p className="text-sm font-semibold">En validación final</p></article>
+        </div>
         <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_320px]">
           <div className="rounded-lg border bg-card p-5">
             <ol className="flex flex-wrap gap-2 text-xs font-extrabold">{STEPS.map(([id, label], i) => <li key={id} className={`rounded-full px-3 py-1.5 ${processStep === id ? "bg-primary text-primary-foreground" : stepIndex(id) < stepIndex(processStep) ? "bg-chart-teal text-primary-foreground" : "bg-muted text-muted-foreground"}`}>{i + 1}. {label}</li>)}</ol>

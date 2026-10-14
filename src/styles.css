@@ -83,12 +83,14 @@
   content: "";
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(color-mix(in oklab, var(--primary-foreground) 25%, transparent) 1px, transparent 1.6px);
-  background-size: 17px 17px;
-  opacity: 0.22;
+  background: linear-gradient(145deg, transparent 45%, color-mix(in oklab, var(--primary-foreground) 12%, transparent) 45%, transparent 85%);
   pointer-events: none;
 }
 .donor-card > * { position: relative; }
+.donor-stat { min-width: 0; border: 1px solid color-mix(in oklab, var(--primary-foreground) 20%, transparent); border-radius: 8px; background: color-mix(in oklab, var(--primary-foreground) 9%, transparent); padding: 10px 8px; }
+.donor-stat p { margin-top: 7px; font-size: 10px; line-height: 1.3; }
+.donor-stat strong { display: block; margin-top: 4px; font-size: 18px; line-height: 1.2; overflow-wrap: anywhere; }
+.donor-stat:last-child strong { font-size: 12px; }
 
 .bo-hero {
   position: relative;
