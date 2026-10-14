@@ -14,6 +14,7 @@
   --color-border: var(--border); --color-input: var(--input); --color-ring: var(--ring); --color-surface: var(--surface); --color-map-fallback: var(--map-fallback);
   --color-success: var(--success); --color-warning: var(--warning); --color-urgent: var(--urgent); --color-chart-teal: var(--chart-teal); --color-chart-gold: var(--chart-gold); --color-bo-canvas: var(--bo-canvas); --color-mobile-canvas: var(--mobile-canvas);
   --shadow-panel: var(--shadow-panel); --shadow-brand: var(--shadow-brand);
+  --color-compatibility: var(--compatibility);
 }
 
 :root {
@@ -32,6 +33,7 @@
   --bo-canvas: oklch(0.977 0.012 25);
   --mobile-canvas: oklch(0.96 0.009 240);
   --primary-deep: oklch(0.36 0.15 20); --primary-lift: oklch(0.66 0.19 33);
+  --compatibility: oklch(0.48 0.19 255);
 }
 
 .dark {
@@ -49,6 +51,7 @@
   --bo-canvas: oklch(0.17 0.018 25);
   --mobile-canvas: oklch(0.18 0.013 245);
   --primary-deep: oklch(0.26 0.11 20); --primary-lift: oklch(0.72 0.17 30);
+  --compatibility: oklch(0.74 0.13 255);
 }
 
 @layer base {
@@ -121,3 +124,21 @@
 .mobile-app .mobile-nav [aria-current="page"] { box-shadow: inset 0 2px 0 var(--secondary); }
 .mobile-app .mobile-header { border-radius: 0 0 18px 18px; }
 .mobile-app .impact-strip { background: var(--chart-teal); color: var(--primary-foreground); }
+
+.institutional-brand {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(145deg, var(--primary), var(--primary-deep));
+}
+.institutional-brand::before, .institutional-brand::after {
+  content: "";
+  position: absolute;
+  width: 720px;
+  height: 720px;
+  border: 70px solid color-mix(in oklab, var(--primary-foreground) 5%, transparent);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.institutional-brand::before { top: -530px; left: -330px; }
+.institutional-brand::after { bottom: -535px; right: -360px; }
+.institutional-brand > * { position: relative; }

@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { FullScreenMap } from "@/components/nexovital/full-screen-map";
 import donationCare from "@/assets/donation-care.jpg";
 import { supabase } from "@/integrations/supabase/client";
+import { DonorCompatibility } from "@/components/nexovital/donor-compatibility";
+import { donorRank } from "@/lib/donor-recognition";
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [
@@ -406,14 +408,15 @@ function Account({role,darkMode,onToggleTheme}:{role:Role;darkMode:boolean;onTog
     <h2 className="mt-3 break-words text-2xl font-extrabold leading-tight">{profile.name}</h2>
     <div className="mt-5 grid grid-cols-3 gap-2">
       <div className="donor-stat"><Droplets className="size-4"/><p>Donaciones</p><strong>{profile.donations}</strong></div>
-      <div className="donor-stat"><Heart className="size-4"/><p>Vidas potenciales</p><strong>~{profile.donations * 3}</strong></div>
-      <div className="donor-stat"><Star className="size-4 text-secondary"/><p>Perfil</p><strong className="text-secondary">Voluntario</strong></div>
+      <div className="donor-stat"><Heart className="size-4"/><p>Vidas Salvadas</p><strong>~{profile.donations * 3}</strong></div>
+      <div className="donor-stat"><Star className="size-4 text-secondary"/><p>Rango</p><strong className="text-secondary">{donorRank(profile.donations)} ★</strong></div>
     </div>
     <p className="mt-2 text-[9px] text-primary-foreground/70">Impacto estimado: hasta 3 vidas por donación.</p>
     <div className="mt-3 flex justify-end"><Button size="sm" variant="outline" disabled={!profile.blood} className="gap-2 rounded-full border-primary-foreground/40 bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/25 hover:text-primary-foreground" onClick={shareDonorCard}><Share2 className="size-4"/>Compartir</Button></div>
     {copied && <p role="status" className="mt-2 text-right text-xs font-bold">¡Texto copiado!</p>}
     {shareError && <p role="alert" className="mt-2 text-xs">{shareError}</p>}
   </section>}
+  {role === "donor" && profile && <DonorCompatibility blood={profile.blood}/>}
   {profile && <section className="mt-6"><h2 className="text-xs font-extrabold uppercase text-muted-foreground">Datos personales</h2><div className="mt-2 divide-y border-y"><AccountRow icon={ShieldCheck} label="Documento" value={profile.document}/><AccountRow icon={Mail} label="Correo electrónico" value={profile.email}/><AccountRow icon={Phone} label="Teléfono" value={profile.phone}/></div></section>}
   {role === "donor" && profile && <section className="mt-7"><h2 className="text-xs font-extrabold uppercase text-muted-foreground">Información de donación</h2><div className="mt-2 divide-y border-y"><AccountRow icon={Droplets} label="Grupo sanguíneo" value={profile.blood || "Sin registrar"}/><AccountRow icon={HeartPulse} label="Disponibilidad" value={profile.available ? "Disponible" : "No disponible"}/><AccountRow icon={Activity} label="Aptitud" value={profile.fitness}/></div></section>}
   <section className="mt-7"><h2 className="text-xs font-extrabold uppercase text-muted-foreground">Apariencia</h2><Button variant="ghost" className="mt-2 flex h-auto w-full justify-start gap-3 border-y py-4 text-left text-foreground" onClick={onToggleTheme} aria-label={darkMode ? "Activar modo claro" : "Activar modo oscuro"}>{darkMode ? <Sun className="size-5 text-primary"/> : <Moon className="size-5 text-primary"/>}<span className="flex-1 font-bold">{darkMode ? "Modo claro" : "Modo oscuro"}</span></Button></section>
